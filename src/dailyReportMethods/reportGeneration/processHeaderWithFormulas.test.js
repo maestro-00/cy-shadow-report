@@ -198,7 +198,7 @@ describe('processHeaderWithFormulas', () => {
           params.bodyRowCount,
           params.playwright
         )
-      ).toThrow('Failed to process header with formulas:');
+      ).toThrow('Failed to process header with formulas.');
     });
 
     it('should throw an error if no formula is found for a key', () => {
@@ -221,7 +221,7 @@ describe('processHeaderWithFormulas', () => {
           params.bodyRowCount,
           params.playwright
         )
-      ).toThrow('Failed to process header with formulas:');
+      ).toThrow('Failed to process header with formulas.');
     });
 
     const invalidHeaderPayloads = [
@@ -241,7 +241,7 @@ describe('processHeaderWithFormulas', () => {
             params.bodyRowCount,
             params.playwright
           )
-        ).toThrow('Failed to process header with formulas:');
+        ).toThrow('Failed to process header with formulas.');
       });
     });
   });

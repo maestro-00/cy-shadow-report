@@ -9,17 +9,17 @@
  */
 export const combineReports = (allReportEntries, placeholders) => {
   if (!Array.isArray(allReportEntries) || !Array.isArray(placeholders)) {
-    throw new Error(
+    throw new TypeError(
       'Invalid input: Expected both allReportEntries and placeholders to be arrays.'
     );
   }
 
   if (allReportEntries.some((entry) => !Array.isArray(entry))) {
-    throw new Error('Invalid report entry: Expected an array.');
+    throw new TypeError('Invalid report entry: Expected an array.');
   }
 
   if (placeholders.some((entry) => !Array.isArray(entry))) {
-    throw new Error('Invalid placeholder entry: Expected an array.');
+    throw new TypeError('Invalid placeholder entry: Expected an array.');
   }
 
   const combinedReports = [];
@@ -29,7 +29,7 @@ export const combineReports = (allReportEntries, placeholders) => {
     const maxTypeCount = Math.max(
       ...allReportEntries.map((report) => {
         if (!Array.isArray(report)) {
-          throw new Error('Invalid report entry: Expected an array.');
+          throw new TypeError('Invalid report entry: Expected an array.');
         }
         return report.length / 2;
       })

@@ -25,45 +25,35 @@ const mockDataObjects = {
 };
 
 // Mock modules before importing
-jest.mock('./sharedMethods/dailyReportHandler.js', () => ({
+jest.unstable_mockModule('./sharedMethods/dailyReportHandler.js', () => ({
   handleDailyReport: mockHandleDailyReport,
 }));
 
-jest.mock('./sharedMethods/summaryHandler.js', () => ({
+jest.unstable_mockModule('./sharedMethods/summaryHandler.js', () => ({
   handleSummary: mockHandleSummary,
   handleWeeklySummary: mockHandleWeeklySummary,
 }));
 
-jest.mock('./sharedMethods/dailyReportRequired.js', () => ({
+jest.unstable_mockModule('./sharedMethods/dailyReportRequired.js', () => ({
   doesTodaysReportExist: mockDoesTodaysReportExist,
 }));
 
-jest.mock('./sharedMethods/summaryRequired.js', () => ({
+jest.unstable_mockModule('./sharedMethods/summaryRequired.js', () => ({
   isSummaryRequired: mockIsSummaryRequired,
   isWeeklySummaryRequired: mockIsWeeklySummaryRequired,
 }));
 
-jest.mock('../constants.js', () => ({
+jest.unstable_mockModule('../constants.js', () => ({
   WEEKLY_SUMMARY_ENABLED: mockWeeklySummaryEnabled,
 }));
 
-jest.mock('./sharedMethods/dateFormatting.js', () => ({
+jest.unstable_mockModule('./sharedMethods/dateFormatting.js', () => ({
   getFormattedMonth: mockGetFormattedMonth,
 }));
 
-jest.mock('chalk', () => mockChalk);
+jest.unstable_mockModule('chalk', () => mockChalk);
 
-// Mock the module itself to provide dataObjects
-jest.mock('./index.js', () => {
-  const actualModule = jest.requireActual('./index.js');
-  return {
-    ...actualModule,
-    dataObjects: mockDataObjects,
-  };
-});
-
-// Import after mocking
-import { createReportContext, main } from './index.js';
+const { createReportContext, main } = await import('./index.js');
 
 let mockProcessExit;
 
@@ -142,24 +132,24 @@ describe('main function', () => {
       expect(secondContext.topLevelSpreadsheetData).toEqual({});
     });
 
-    it.skip('should handle CSV reports directly without checking other conditions', async () => {
+    it('should handle CSV reports directly without checking other conditions', async () => {
       const options = { csv: true };
       await main(options);
 
       expect(mockIsSummaryRequired).not.toHaveBeenCalled();
       expect(mockDoesTodaysReportExist).not.toHaveBeenCalled();
-      expect(mockHandleDailyReport).toHaveBeenCalledWith(options);
+      expect(mockHandleDailyReport).toHaveBeenCalledWith(expect.objectContaining(options), expect.any(Object));
     });
   });
 
   describe('Monthly summary handling', () => {
-    it.skip('should create monthly summary when required', async () => {
+    it('should create monthly summary when required', async () => {
       mockIsSummaryRequired.mockResolvedValue(true);
       const options = {};
 
       await main(options);
 
-      expect(mockHandleSummary).toHaveBeenCalledWith(options);
+      expect(mockHandleSummary).toHaveBeenCalledWith(expect.objectContaining(options), expect.any(Object));
     });
 
     it('should skip monthly summary when not required', async () => {
@@ -173,13 +163,13 @@ describe('main function', () => {
   });
 
   describe('Daily report handling', () => {
-    it.skip('should create daily report when it does not exist', async () => {
+    it('should create daily report when it does not exist', async () => {
       mockDoesTodaysReportExist.mockResolvedValue(false);
       const options = {};
 
       await main(options);
 
-      expect(mockHandleDailyReport).toHaveBeenCalledWith(options);
+      expect(mockHandleDailyReport).toHaveBeenCalledWith(expect.objectContaining(options), expect.any(Object));
     });
 
     it('should skip daily report when it exists and duplicate is false', async () => {
@@ -191,25 +181,25 @@ describe('main function', () => {
       expect(mockHandleDailyReport).not.toHaveBeenCalled();
     });
 
-    it.skip('should create daily report when it exists and duplicate is true', async () => {
+    it('should create daily report when it exists and duplicate is true', async () => {
       mockDoesTodaysReportExist.mockResolvedValue(true);
       const options = { duplicate: true };
 
       await main(options);
 
-      expect(mockHandleDailyReport).toHaveBeenCalledWith(options);
+      expect(mockHandleDailyReport).toHaveBeenCalledWith(expect.objectContaining(options), expect.any(Object));
     });
   });
 
   describe('Weekly summary handling', () => {
-    it.skip('should create weekly summary when enabled and required', async () => {
+    it('should create weekly summary when enabled and required', async () => {
       mockWeeklySummaryEnabled.mockReturnValue(true);
       mockIsWeeklySummaryRequired.mockResolvedValue(true);
       const options = {};
 
       await main(options);
 
-      expect(mockHandleWeeklySummary).toHaveBeenCalledWith(options);
+      expect(mockHandleWeeklySummary).toHaveBeenCalledWith(expect.objectContaining(options), expect.any(Object));
     });
 
     it('should skip weekly summary when enabled but not required', async () => {
@@ -235,7 +225,9 @@ describe('main function', () => {
 
   describe('Error handling', () => {
     it('should reject errors for the CLI boundary to handle', async () => {
-      const testError = new Error('Test error');
+      const testError = new Error('Failed to handle daily report.', {
+        cause: new Error('Test error'),
+      });
       mockHandleDailyReport.mockRejectedValue(testError);
 
       await expect(main({ csv: true })).rejects.toBe(testError);

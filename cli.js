@@ -7,5 +7,10 @@ if (process.argv.includes('--help')) {
   process.exit(0);
 }
 
-const { run } = await import('./src/cliMain.js');
-await run();
+try {
+  const { run } = await import('./src/cliMain.js');
+  await run();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : 'Could not start qa-shadow-report.');
+  process.exitCode = 1;
+}

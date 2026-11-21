@@ -7,10 +7,24 @@ import {
   handleWeeklySummary,
 } from './sharedMethods/summaryHandler.js';
 import { spawn } from 'child_process';
-import { GOOGLE_KEYFILE_PATH, GOOGLE_SHEET_ID } from '../constants.js';
+import { checkReportingConfig, GOOGLE_KEYFILE_PATH, GOOGLE_SHEET_ID } from '../constants.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { findProjectRoot } from './utils/projectPaths.js';
+
+/**
+ * Selects an actionable configuration or results diagnostic from an operation error.
+ * @param {unknown} error - Command failure.
+ * @returns {string} User-facing diagnostic.
+ */
+const commandErrorMessage = (error) => {
+  const seen = new Set();
+  for (let current = error; current instanceof Error && !seen.has(current); current = current.cause) {
+    if (['GOOGLE_SHEETS_NOT_CONFIGURED', 'TEST_RESULTS_NOT_AVAILABLE'].includes(current.code)) return current.message;
+    seen.add(current);
+  }
+  return error instanceof Error ? error.message : 'An unexpected error occurred.';
+};
 
 /**
  * Resolves the path to the postInstall.js script.
@@ -44,6 +58,15 @@ const resolveProjectRoot = () => {
  * Supports generating daily and monthly reports with optional CSV output and duplication.
  */
 export async function run() {
+  try {
+    checkReportingConfig({
+      skipGoogle: !process.env.CI && (!GOOGLE_KEYFILE_PATH() || GOOGLE_SHEET_ID() === false),
+    });
+  } catch (error) {
+    console.error(commandErrorMessage(error));
+    process.exitCode = 1;
+    return;
+  }
   const args = process.argv.slice(2);
   const commands = args.filter((arg) =>
     ['todays-report', 'monthly-summary', 'weekly-summary'].includes(arg)
@@ -98,11 +121,11 @@ export async function run() {
     });
 
     child.on('close', (code) => {
-      process.exit(code);
+      process.exit(code ?? 1);
     });
 
     child.on('error', (err) => {
-      console.info('Failed to start postInstall.js:', err);
+      console.error(`Failed to start postInstall.js: ${commandErrorMessage(err)}`);
       process.exit(1);
     });
   } else if (!framework) {
@@ -137,7 +160,7 @@ export async function run() {
         break;
       }
     } catch (error) {
-      console.error(`Error executing command: ${error.message}`);
+      console.error(`Error executing command: ${commandErrorMessage(error)}`);
       process.exitCode = 1;
     }
   }

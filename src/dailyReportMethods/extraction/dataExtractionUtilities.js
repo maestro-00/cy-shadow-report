@@ -9,14 +9,14 @@
  */
 export const extractAreaFromFullFile = async (fullFile, testTypesAvailable) => {
   if (typeof fullFile !== 'string') {
-    throw new Error('The "fullFile" argument must be a string.');
+    throw new TypeError('The "fullFile" argument must be a string.');
   }
 
   if (
     !Array.isArray(testTypesAvailable) ||
     testTypesAvailable.some((type) => typeof type !== 'string')
   ) {
-    throw new Error(
+    throw new TypeError(
       'The "testTypesAvailable" argument must be an array of strings.'
     );
   }

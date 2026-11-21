@@ -11,7 +11,7 @@ import chalk from 'chalk';
  */
 const arrayToCSV = (data) => {
   if (!Array.isArray(data) || !data.every((row) => Array.isArray(row))) {
-    throw new Error('arrayToCSV expects a 2D array');
+    throw new TypeError('arrayToCSV expects a 2D array');
   }
   return data
     .map((row) =>

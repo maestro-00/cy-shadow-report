@@ -138,3 +138,11 @@ throw new Error('Failed to fetch spreadsheet data.', { cause: error });
 Do not log an error immediately before rethrowing it, because that produces
 duplicate diagnostics. Keep `console.warn` and `console.info` for expected,
 user-actionable conditions.
+
+Summary eligibility checks retain their best-effort fallback when data cannot
+be read. Report creation and daily duplicate checks propagate operational
+failures so a failed lookup cannot be mistaken for a missing report.
+
+Library callers should handle thrown errors or rejected promises. Reporting
+and setup commands own stderr output and exit status. Setup must persist its
+configured status before reporting completion.

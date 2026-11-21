@@ -138,16 +138,11 @@ describe('constructHeaderReport', () => {
 
         const payload = [['area1', 'spec1', 'test1', 'unit', 'smoke', 'team1']];
 
-        await expect(constructHeaderReport(payload)).rejects.toThrow(
-          'Failed to construct header report'
-        );
-        expect(console.error).toHaveBeenCalledWith(
-          'Error constructing header report:',
-          expect.any(Error)
-        );
-        expect(console.error.mock.calls[0][1].message).toBe(
-          `Invalid types: Expected an array at index ${index}.`
-        );
+        await expect(constructHeaderReport(payload)).rejects.toMatchObject({
+          message: 'Failed to construct header report.',
+          cause: expect.objectContaining({ message: `Invalid types: Expected an array at index ${index}.` }),
+        });
+        expect(console.error).not.toHaveBeenCalled();
 
         console.error.mockClear();
       }
@@ -161,14 +156,11 @@ describe('constructHeaderReport', () => {
       mockGenerateReport.mockRejectedValueOnce(new Error(errorMessage));
 
       const payload = [['area1', 'spec1', 'test1', 'unit', 'smoke', 'team1']];
-      await expect(constructHeaderReport(payload)).rejects.toThrow(
-        'Failed to construct header report'
-      );
-      expect(console.error).toHaveBeenCalledWith(
-        'Error constructing header report:',
-        expect.any(Error)
-      );
-      expect(console.error.mock.calls[0][1].message).toBe(errorMessage);
+      await expect(constructHeaderReport(payload)).rejects.toMatchObject({
+        message: 'Failed to construct header report.',
+        cause: expect.objectContaining({ message: errorMessage }),
+      });
+      expect(console.error).not.toHaveBeenCalled();
     });
 
     it('should handle errors during combining reports', async () => {
@@ -178,14 +170,11 @@ describe('constructHeaderReport', () => {
       });
 
       const payload = [['area1', 'spec1', 'test1', 'unit', 'smoke', 'team1']];
-      await expect(constructHeaderReport(payload)).rejects.toThrow(
-        'Failed to construct header report'
-      );
-      expect(console.error).toHaveBeenCalledWith(
-        'Error constructing header report:',
-        expect.any(Error)
-      );
-      expect(console.error.mock.calls[0][1].message).toBe(errorMessage);
+      await expect(constructHeaderReport(payload)).rejects.toMatchObject({
+        message: 'Failed to construct header report.',
+        cause: expect.objectContaining({ message: errorMessage }),
+      });
+      expect(console.error).not.toHaveBeenCalled();
     });
   });
 

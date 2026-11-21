@@ -5,11 +5,11 @@
  */
 export const sortPayload = (payload) => {
   if (!payload || typeof payload !== 'object') {
-    throw new Error('Invalid payload: Expected an object.');
+    throw new TypeError('Invalid payload: Expected an object.');
   }
 
   if (!Array.isArray(payload.bodyPayload)) {
-    throw new Error(
+    throw new TypeError(
       'Invalid payload: Expected an object with a bodyPayload array.'
     );
   }
@@ -17,11 +17,12 @@ export const sortPayload = (payload) => {
   // Check if bodyPayload array elements have the required properties
   for (const item of payload.bodyPayload) {
     if (
+      item == null ||
       typeof item.area !== 'string' ||
       typeof item.spec !== 'string' ||
       typeof item.testName !== 'string'
     ) {
-      throw new Error(
+      throw new TypeError(
         'Invalid payload item: Each item in bodyPayload should have area, spec, and testName as strings.'
       );
     }

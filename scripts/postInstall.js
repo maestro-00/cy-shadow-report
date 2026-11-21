@@ -15,12 +15,7 @@ const configFileName = 'shadowReportConfig.js';
 
 const projectRootPath = findProjectRoot(__dirname);
 
-if (!projectRootPath) {
-  console.error('Error: Could not determine the project root path.');
-  process.exit(1);
-}
-
-const configFilePath = path.join(projectRootPath, configFileName);
+const configFilePath = projectRootPath && path.join(projectRootPath, configFileName);
 const isConfiguredFilePath = path.join(__dirname, 'configuredStatus.js');
 const isConfigured = isProjectConfigured();
 const packages = ['mochawesome', 'mochawesome-merge'];
@@ -32,21 +27,44 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+/**
+ * Reports a setup failure and releases the interactive input stream.
+ * @param {unknown} error - Setup failure.
+ */
+const failSetup = (error) => {
+  const message = error instanceof Error ? error.message : 'Unexpected setup failure.';
+  console.error(chalk.red(`Setup failed: ${message} See ${setupLink}`));
+  process.exitCode = 1;
+  rl.close();
+};
+
+/**
+ * Runs a command or prompt callback at the setup error boundary.
+ * @param {Function} action - Synchronous setup action.
+ */
+const runSetupAction = (action) => {
+  try {
+    action();
+  } catch (error) {
+    failSetup(error);
+  }
+};
+
 const promptUser = (message, options, callback) => {
-  rl.question(chalk.blue(message), (answer) => {
+  rl.question(chalk.blue(message), (answer) => runSetupAction(() => {
     answer = answer.trim().toLowerCase();
     if (options.includes(answer)) {
       callback(answer);
     } else {
       confirmExit();
     }
-  });
+  }));
 };
 
 const confirmExit = () => {
   rl.question(
     chalk.yellow('Would you like to exit setup? [y/n]: '),
-    (answer) => {
+    (answer) => runSetupAction(() => {
       if (answer === 'n') {
         startSetup();
       } else {
@@ -56,11 +74,10 @@ const confirmExit = () => {
             ` Check the setup guide information on dependencies ${setupLink}`
           )
         );
-        updateIsConfiguredFile(true);
         rl.close();
         process.exit(0);
       }
-    }
+    })
   );
 };
 
@@ -191,7 +208,7 @@ const installPackages = (manager) => {
     }
     console.info(chalk.green('Packages installed successfully.'));
   } catch (error) {
-    console.error(chalk.red('Failed to install packages:'), error);
+    throw new Error(`Failed to install packages with ${manager}.`, { cause: error });
   }
 };
 
@@ -259,18 +276,20 @@ const updateIsConfiguredFile = (isConfigured) => {
     const content = fs.readFileSync(isConfiguredFilePath, 'utf8');
     const searchValue = isConfigured ? 'return false;' : 'return true;';
     const replaceValue = isConfigured ? 'return true;' : 'return false;';
+    if (!content.includes(searchValue)) {
+      if (content.includes(replaceValue)) return;
+      throw new Error('Unrecognized setup status file format.');
+    }
     const updatedContent = content.replace(searchValue, replaceValue);
     fs.writeFileSync(isConfiguredFilePath, updatedContent, 'utf8');
   } catch (err) {
-    console.error(
-      chalk.red('Failed to update the configuredStatus file:', err)
-    );
+    throw new Error(`Failed to update setup status at ${isConfiguredFilePath}.`, { cause: err });
   }
 };
 
 const finalizeSetup = () => {
-  console.info(chalk.green('qa-shadow-report setup complete!'));
   updateIsConfiguredFile(true);
+  console.info(chalk.green('qa-shadow-report setup complete!'));
   rl.close();
 };
 
@@ -322,17 +341,10 @@ try {
 
 // Only the setup command should prompt. Importing this file for tests must not.
 if (invokedDirectly) {
-  try {
+  runSetupAction(() => {
+    if (!projectRootPath) throw new Error('Could not determine the project root path.');
     confirmReconfigure();
-  } catch (error) {
-    console.error(
-      chalk.red(
-        `An error occurred during the post-installation script. Check the setup guide information on dependencies ${setupLink}`
-      ),
-      error
-    );
-    process.exit(1);
-  }
+  });
 }
 
 // Export functions for testing

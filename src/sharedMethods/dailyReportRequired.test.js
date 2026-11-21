@@ -1,57 +1,32 @@
 import { jest } from '@jest/globals';
-import { doesTodaysReportExist } from './dailyReportRequired.js';
-import { getTodaysFormattedDate } from './dateFormatting.js';
 
-// Mock dependencies
-jest.mock('./dateFormatting.js');
-jest.mock('../google/googleSheetIntegration/getSheetData.js');
+const getTitles = jest.fn();
+jest.unstable_mockModule('../google/sheetDataMethods/getSheetInfo.js', () => ({
+  getExistingTabTitlesInRange: getTitles,
+}));
+jest.unstable_mockModule('./dateFormatting.js', () => ({
+  getTodaysFormattedDate: () => 'Mar 20, 2024',
+}));
 
-describe('Daily Report Required', () => {
-  const mockDate = 'Mar 20, 2024';
-  const mockExistingTitles = ['Mar 20, 2024', 'Mar 19, 2024'];
+const { doesTodaysReportExist } = await import('./dailyReportRequired.js');
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    // Setup default mock implementations
-    getTodaysFormattedDate.mockReturnValue(mockDate);
+describe('doesTodaysReportExist', () => {
+  it.each([
+    [['Mar 20, 2024'], true],
+    [['Mar 19, 2024'], false],
+    [[], false],
+  ])('checks titles %j', async (titles, expected) => {
+    getTitles.mockResolvedValueOnce(titles);
+    await expect(doesTodaysReportExist()).resolves.toBe(expected);
   });
 
-  it.skip('should return true when today\'s report exists', async () => {
-    const result = await doesTodaysReportExist();
-    expect(result).toBe(true);
-    expect(getTodaysFormattedDate).toHaveBeenCalled();
-  });
+  it('preserves a lookup failure as the cause', async () => {
+    const cause = new Error('Sheets API failed');
+    getTitles.mockRejectedValueOnce(cause);
 
-  it.skip('should return false when today\'s report does not exist', async () => {
-    const result = await doesTodaysReportExist();
-    expect(result).toBe(false);
-  });
-
-  it.skip('should handle empty tab titles list', async () => {
-    const result = await doesTodaysReportExist();
-    expect(result).toBe(false);
-  });
-
-  it.skip('should handle case-insensitive title matching', async () => {
-    const result = await doesTodaysReportExist();
-    expect(result).toBe(true);
-  });
-
-  it.skip('should handle whitespace in titles', async () => {
-    const result = await doesTodaysReportExist();
-    expect(result).toBe(true);
-  });
-
-  it.skip('should handle error from getExistingTabTitlesInRange', async () => {
-    const error = new Error('API Error');
-    await expect(doesTodaysReportExist()).rejects.toThrow(error);
-  });
-
-  it.skip('should handle error from getTodaysFormattedDate', async () => {
-    const error = new Error('Date Error');
-    getTodaysFormattedDate.mockImplementation(() => {
-      throw error;
+    await expect(doesTodaysReportExist()).rejects.toMatchObject({
+      message: 'Failed to check whether today\'s report exists.',
+      cause,
     });
-    await expect(doesTodaysReportExist()).rejects.toThrow(error);
   });
 });

@@ -2,12 +2,12 @@ import { jest } from '@jest/globals';
 
 // Mock fs/promises before importing the module
 const mockReadFile = jest.fn();
-jest.mock('fs/promises', () => ({
+jest.unstable_mockModule('fs/promises', () => ({
   readFile: mockReadFile,
 }));
 
 // Import the module after mocking
-import { loadJSON, letterToNumber, numberToLetter } from './dataHandler.js';
+const { loadJSON, letterToNumber, numberToLetter } = await import('./dataHandler.js');
 
 describe('Data Handler', () => {
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('Data Handler', () => {
   });
 
   describe('loadJSON', () => {
-    it.skip('should load JSON data successfully', async () => {
+    it('should load JSON data successfully', async () => {
       const mockJSONData = { key: 'value' };
       mockReadFile.mockResolvedValueOnce(JSON.stringify(mockJSONData));
 
@@ -36,18 +36,11 @@ describe('Data Handler', () => {
       );
       mockReadFile.mockRejectedValueOnce(error);
 
-      await expect(loadJSON('nonexistent.json')).rejects.toThrow(
-        'Failed to load and parse test results JSON file.'
-      );
-      expect(console.error).toHaveBeenCalledTimes(1);
-      expect(console.error.mock.calls[0][0]).toBe(
-        'Error loading test results JSON data:'
-      );
-      const loggedError = console.error.mock.calls[0][1];
-      expect(loggedError.message).toBe(
-        'ENOENT: no such file or directory, open \'nonexistent.json\''
-      );
-      expect(loggedError.code).toBe('ENOENT');
+      await expect(loadJSON('nonexistent.json')).rejects.toMatchObject({
+        message: 'Failed to load and parse test results JSON file.',
+        cause: error,
+      });
+      expect(console.error).not.toHaveBeenCalled();
     });
 
     it('should handle invalid JSON', async () => {
@@ -56,7 +49,7 @@ describe('Data Handler', () => {
       await expect(loadJSON('invalid.json')).rejects.toThrow(
         'Failed to load and parse test results JSON file.'
       );
-      expect(console.error).toHaveBeenCalled();
+      expect(console.error).not.toHaveBeenCalled();
     });
   });
 

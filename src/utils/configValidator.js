@@ -177,25 +177,16 @@ export function validateAndReportConfig(config, configPath, exitOnError = false)
   const result = validateConfig(config, configPath);
 
   if (!result.valid) {
-    console.error(
-      chalk.red.bold('\n❌ Configuration validation failed:\n')
-    );
-    result.errors.forEach((error, index) => {
-      console.error(`\n${index + 1}. ${error}\n`);
-    });
-    console.error(
-      chalk.yellow(`Config file: ${configPath}\n`)
-    );
-
+    const lines = [
+      chalk.red.bold('Configuration validation failed:'),
+      ...result.errors.map((error, index) => `${index + 1}. ${error}`),
+      chalk.yellow(`Config file: ${configPath}`),
+    ];
     if (exitOnError) {
-      console.error(
-        chalk.yellow(
-          'Please fix the configuration errors above and try again.\n' +
-          'For setup help, run: ' + chalk.green('npx qasr-setup')
-        )
-      );
-      process.exit(1);
+      lines.push('Fix the configuration errors above. For setup help, run npx qasr-setup.');
     }
+    console.error(lines.join('\n'));
+    if (exitOnError) process.exit(1);
 
     return false;
   }

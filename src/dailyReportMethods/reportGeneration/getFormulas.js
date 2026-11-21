@@ -27,7 +27,7 @@ export const getFormulas = (
     typeof subjectColumn !== 'string' ||
     typeof stateColumn !== 'string'
   ) {
-    throw new Error(
+    throw new TypeError(
       'Invalid input: Ensure all parameters are of the correct type.'
     );
   }

@@ -1,4 +1,5 @@
-import { sheets } from '../auth.js';
+import { requireSheetsClient } from '../../utils/errors.js';
+import { sheets, initializationError } from '../auth.js';
 import { GOOGLE_SHEET_ID } from '../../../constants.js';
 
 /**
@@ -11,7 +12,7 @@ export const getTopLevelSpreadsheetData = async (
   spreadsheetId = GOOGLE_SHEET_ID()
 ) => {
   try {
-    const response = await sheets.spreadsheets.get({
+    const response = await requireSheetsClient(sheets, initializationError).spreadsheets.get({
       spreadsheetId,
     });
     return response.data;
@@ -31,12 +32,10 @@ export const getTabValuesByTitle = async (
   tabTitle,
   sheetsInstance = sheets
 ) => {
-  if (!sheetsInstance) {
-    throw new Error('Invalid sheets instance');
-  }
+  const client = requireSheetsClient(sheetsInstance, initializationError);
 
   try {
-    const response = await sheetsInstance.spreadsheets.values.get({
+    const response = await client.spreadsheets.values.get({
       spreadsheetId: GOOGLE_SHEET_ID(),
       range: tabTitle,
     });

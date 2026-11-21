@@ -253,7 +253,7 @@ export const findMatchingColumnByWeeklyTabId = async (
     !Array.isArray(defaultHeaderMetrics) ||
     defaultHeaderMetrics.length === 0
   ) {
-    throw new Error(
+    throw new TypeError(
       'Invalid defaultHeaderMetrics: Expected a non-empty array.'
     );
   }
@@ -302,7 +302,7 @@ export const findMatchingColumnByTabId = async (
     !Array.isArray(defaultHeaderMetrics) ||
     defaultHeaderMetrics.length === 0
   ) {
-    throw new Error(
+    throw new TypeError(
       'Invalid defaultHeaderMetrics: Expected a non-empty array.'
     );
   }

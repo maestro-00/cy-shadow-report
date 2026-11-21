@@ -1,7 +1,9 @@
 import { jest } from '@jest/globals';
+import path from 'path';
 
 const originalArgv = process.argv;
 const originalCI = process.env.CI;
+const originalExitCode = process.exitCode;
 
 const isProcessExit = (error) =>
   typeof error?.message === 'string' && error.message.startsWith('process.exit:');
@@ -25,7 +27,7 @@ const loadCli = async ({ args = [], configured = true, keyFile = 'key.json', she
     }),
   }));
   const daily = dailyError
-    ? jest.fn().mockRejectedValue(new Error(dailyError))
+    ? jest.fn().mockRejectedValue(dailyError instanceof Error ? dailyError : new Error(dailyError))
     : jest.fn().mockResolvedValue(undefined);
   const monthly = jest.fn().mockResolvedValue(undefined);
   const weekly = jest.fn().mockResolvedValue(undefined);
@@ -43,6 +45,7 @@ const loadCli = async ({ args = [], configured = true, keyFile = 'key.json', she
     handleWeeklySummary: weekly,
   }));
   jest.unstable_mockModule('../constants.js', () => ({
+    checkReportingConfig: jest.fn(),
     GOOGLE_KEYFILE_PATH: jest.fn(() => keyFile),
     GOOGLE_SHEET_ID: jest.fn(() => sheetId),
   }));
@@ -67,13 +70,44 @@ const loadCli = async ({ args = [], configured = true, keyFile = 'key.json', she
 
 afterEach(() => {
   process.argv = originalArgv;
-  process.exitCode = undefined;
+  process.exitCode = originalExitCode;
   if (originalCI === undefined) delete process.env.CI;
   else process.env.CI = originalCI;
   jest.restoreAllMocks();
 });
 
 describe('cliMain boundaries', () => {
+  it('prints the deferred credential diagnostic once for a wrapped failure', async () => {
+    const credentialError = new Error('Google Sheets is not configured.');
+    credentialError.code = 'GOOGLE_SHEETS_NOT_CONFIGURED';
+    const stderr = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await loadCli({
+      args: ['todays-report', 'cypress'],
+      dailyError: new Error('Failed to handle daily report.', { cause: credentialError }),
+    });
+
+    expect(stderr).toHaveBeenCalledTimes(1);
+    expect(stderr).toHaveBeenCalledWith('Error executing command: Google Sheets is not configured.');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('reports setup path resolution failures once and exits', async () => {
+    const join = path.join;
+    jest.spyOn(path, 'join').mockImplementation((...parts) => {
+      if (parts.includes('../scripts/postInstall.js')) throw new Error('path failed');
+      return join(...parts);
+    });
+    const stderr = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { exit, spawn } = await loadCli({ args: ['cypress'], configured: false });
+
+    expect(stderr).toHaveBeenCalledTimes(1);
+    expect(stderr).toHaveBeenCalledWith('Error resolving postInstall.js: path failed');
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(spawn).not.toHaveBeenCalled();
+  });
+
   it('dispatches todays-report and normalizes framework aliases', async () => {
     const { daily } = await loadCli({ args: ['todays-report', 'cy'] });
 

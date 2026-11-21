@@ -17,9 +17,10 @@ export const withErrorContext = (message, cause) => {
  */
 export const requireSheetsClient = (sheetsInstance, initializationError) => {
   if (sheetsInstance) return sheetsInstance;
-  throw withErrorContext(
+  const error = new Error(
     'Google Sheets is not configured. Please verify the credentials and spreadsheet configuration.',
-    initializationError
+    { cause: initializationError }
   );
+  error.code = 'GOOGLE_SHEETS_NOT_CONFIGURED';
+  throw error;
 };
-

@@ -163,6 +163,6 @@ describe('constructWeeklyPayloadForCopyPaste', () => {
 
     await expect(
       constructWeeklyPayloadForCopyPaste(sourceTitles, destinationTitle)
-    ).rejects.toThrow('Error building weekly copy-paste payload.');
+    ).rejects.toThrow('Failed to build weekly copy-paste payload.');
   });
 });

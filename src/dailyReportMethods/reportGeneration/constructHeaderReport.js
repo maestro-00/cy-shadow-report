@@ -17,7 +17,7 @@ import {
  */
 export const constructHeaderReport = async (payload) => {
   if (!Array.isArray(payload)) {
-    throw new Error('Invalid payload: Expected an array.');
+    throw new TypeError('Invalid payload: Expected an array.');
   }
 
   const typesAvailable = TEST_TYPES_AVAILABLE();

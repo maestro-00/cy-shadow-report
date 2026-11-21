@@ -176,6 +176,11 @@ describe('sortPayload', () => {
 
   // Error Handling
   describe('Error Handling', () => {
+    it('rejects malformed payload arguments with TypeError', () => {
+      expect(() => sortPayload(null)).toThrow(TypeError);
+      expect(() => sortPayload({ bodyPayload: [null] })).toThrow(TypeError);
+    });
+
     it('should handle sorting errors gracefully', () => {
       const payload = createPayload([
         createPayloadItem('A', 'X', 'Y'),
@@ -189,10 +194,12 @@ describe('sortPayload', () => {
         throw new Error('Test error');
       };
 
-      expect(() => sortPayload(payload)).toThrow('Test error');
+      try {
+        expect(() => sortPayload(payload)).toThrow('Failed to sort daily report payload.');
+      } finally {
+        String.prototype.localeCompare = originalLocaleCompare;
+      }
 
-      // Restore original localeCompare
-      String.prototype.localeCompare = originalLocaleCompare;
     });
   });
 });

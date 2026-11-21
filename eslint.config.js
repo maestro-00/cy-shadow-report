@@ -77,6 +77,7 @@ export default [
       'docs/',
       'cypress-example/',
       'playwright-example/',
+      'shadowReportConfig.js',
       '**/*.test.js',
       '__tests__/',
     ],

@@ -222,27 +222,27 @@ export const buildFormulas = (
   constants = { FORMULA_TEMPLATES, FORMULA_KEYS }
 ) => {
   if (typeof type !== 'string') {
-    throw new Error('Type must be a string.');
+    throw new TypeError('Type must be a string.');
   }
   if (!Number.isInteger(headerRowIndex) || headerRowIndex <= 0) {
-    throw new Error('Header row index must be a positive integer.');
+    throw new RangeError('Header row index must be a positive integer.');
   }
   if (
     !Number.isInteger(totalNumberOfRows) ||
     totalNumberOfRows <= headerRowIndex
   ) {
-    throw new Error(
+    throw new RangeError(
       'Total number of rows must be an integer greater than header row index.'
     );
   }
   if (!Number.isInteger(bodyRowCount) || bodyRowCount <= 0) {
-    throw new Error('Body row count must be a positive integer.');
+    throw new RangeError('Body row count must be a positive integer.');
   }
   if (typeof subjectColumn !== 'string' || !subjectColumn.trim()) {
-    throw new Error('Subject column must be a non-empty string.');
+    throw new TypeError('Subject column must be a non-empty string.');
   }
   if (typeof stateColumn !== 'string' || !stateColumn.trim()) {
-    throw new Error('State column must be a non-empty string.');
+    throw new TypeError('State column must be a non-empty string.');
   }
 
   if (
@@ -295,7 +295,7 @@ export const buildFormulas = (
 export const constructHeaderRegex = (getKeysPattern) => {
   const keysPattern = getKeysPattern();
   if (typeof keysPattern !== 'string' || !keysPattern.trim()) {
-    throw new Error('The keys pattern must be a non-empty string.');
+    throw new TypeError('The keys pattern must be a non-empty string.');
   }
   return new RegExp(`(.+) (${keysPattern})$`);
 };
@@ -318,13 +318,13 @@ export const determineSubjectColumn = (
   constants = { TEST_CATEGORIES_AVAILABLE, TEST_TYPES_AVAILABLE }
 ) => {
   if (typeof type !== 'string') {
-    throw new Error('Type must be a string.');
+    throw new TypeError('Type must be a string.');
   }
   if (!Array.isArray(columnsAvailable)) {
-    throw new Error('columnsAvailable must be an array.');
+    throw new TypeError('columnsAvailable must be an array.');
   }
   if (typeof numberToLetter !== 'function') {
-    throw new Error('numberToLetter must be a function.');
+    throw new TypeError('numberToLetter must be a function.');
   }
   if (
     typeof constants.TEST_CATEGORIES_AVAILABLE !== 'function' ||
@@ -370,10 +370,10 @@ export const determineSubjectColumn = (
  */
 export const getKeysPattern = (constants = { FORMULA_KEYS }) => {
   if (!Array.isArray(constants.FORMULA_KEYS)) {
-    throw new Error('FORMULA_KEYS must be an array.');
+    throw new TypeError('FORMULA_KEYS must be an array.');
   }
   if (!constants.FORMULA_KEYS.every((key) => typeof key === 'string')) {
-    throw new Error('FORMULA_KEYS must be an array of strings.');
+    throw new TypeError('FORMULA_KEYS must be an array of strings.');
   }
 
   return constants.FORMULA_KEYS.map((key) => `(${key})`).join('|');
@@ -396,13 +396,13 @@ export const createMergeQueries = (data, headerRowIndex, sheetId) => {
         Array.isArray(row) && row.every((cell) => typeof cell === 'string')
     )
   ) {
-    throw new Error('Data must be a 2D array of strings.');
+    throw new TypeError('Data must be a 2D array of strings.');
   }
   if (!Number.isInteger(headerRowIndex) || headerRowIndex < 0) {
-    throw new Error('Header row index must be a non-negative integer.');
+    throw new RangeError('Header row index must be a non-negative integer.');
   }
   if (!Number.isInteger(sheetId) || sheetId < 0) {
-    throw new Error('Sheet ID must be a non-negative integer.');
+    throw new RangeError('Sheet ID must be a non-negative integer.');
   }
 
   const createMergeQuery = (start, end, startColumn, endColumn) => ({

@@ -1,3 +1,4 @@
+import { withErrorContext } from '../../utils/errors.js';
 import {
   getFormattedMonth,
   getPreviousMonthsYear,
@@ -21,6 +22,6 @@ export const createSummaryTitle = () => {
 
     return `Monthly summary ${lastMonth} ${previousMonthsYear}`;
   } catch (error) {
-    throw new Error('Could not generate summary title due to date formatting error.', { cause: error });
+    throw withErrorContext('Could not generate summary title due to date formatting error.', error);
   }
 };

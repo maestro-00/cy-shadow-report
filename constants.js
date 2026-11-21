@@ -4,7 +4,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import dotenv from 'dotenv';
 import { getModulePaths, findProjectRoot } from './src/utils/projectPaths.js';
-import { validateAndReportConfig } from './src/utils/configValidator.js';
+import { validateConfig } from './src/utils/configValidator.js';
 
 dotenv.config();
 
@@ -40,20 +40,19 @@ const getConfigPathFromArgs = () => {
 const projectRootPath = findProjectRoot(__dirname);
 
 if (!projectRootPath) {
-  console.error('Error: Could not determine the project root path.');
-  process.exit(1);
+  throw new Error('Could not determine the project root path.');
 }
 
 const defaultConfigPath = path.join(__dirname, 'shadowReportConfig.js');
-const absoluteDefaultConfigPath = pathToFileURL(defaultConfigPath).href;
 
 // Main logic to determine config path
 const configPath =
   getConfigPathFromArgs() ||
   findConfigFile(projectRootPath, 'shadowReportConfig') ||
-  absoluteDefaultConfigPath;
+  defaultConfigPath;
 
 let shadowConfigDetails = {};
+let configLoadError;
 
 try {
   if (fs.existsSync(configPath)) {
@@ -67,22 +66,27 @@ try {
         ? shadowConfig
         : loaded;
 
-    // Validate config if it's not empty and not in test mode
-    if (
-      Object.keys(shadowConfigDetails).length > 0 &&
-      !process.env.JEST_WORKER_ID
-    ) {
-      // Don't exit on error here - let the specific functions handle missing values
-      // This allows for CSV-only mode where Google Sheets config isn't required
-      validateAndReportConfig(shadowConfigDetails, configPath, false);
-    }
   }
 } catch (error) {
-  console.error(
-    chalk.red(`Error loading configuration file at path: ${configPath}`)
-  );
-  console.error(chalk.red(error.message));
+  configLoadError = new Error(`Could not load configuration at ${configPath}. Check the file syntax and exports.`, { cause: error });
 }
+
+/**
+ * Checks loaded configuration at the reporting command boundary.
+ * @param {{skipGoogle?: boolean}} [options] - Validation options for CSV output.
+ */
+export const checkReportingConfig = (options) => {
+  if (configLoadError) throw configLoadError;
+  if (fs.existsSync(configPath)) {
+    const { valid, errors } = validateConfig(shadowConfigDetails, configPath, options);
+    if (!valid) {
+      throw new Error([
+        `Configuration validation failed for ${configPath}`,
+        ...errors.map((message, index) => `${index + 1}. ${message}`),
+      ].join('\n'));
+    }
+  }
+};
 
 /**
  * Runtime config: prefer test-injected global, else file-loaded module config.
@@ -162,7 +166,17 @@ export const GOOGLE_KEYFILE_PATH = () => {
   return keyFilePath;
 };
 
+/**
+ * Identifies a test-results diagnostic safe to display at the CLI.
+ * @param {string} message - Guidance for locating the results.
+ * @returns {Error} The tagged diagnostic.
+ */
+const testResultsError = (message) => Object.assign(new Error(message), {
+  code: 'TEST_RESULTS_NOT_AVAILABLE',
+});
+
 export const TEST_DATA = (cypress) => {
+  if (configLoadError) throw configLoadError;
   const shadowConfigFile =
     getActiveShadowConfig() && getActiveShadowConfig().testData;
   const cypressFile = 'cypressTestResults.json';
@@ -175,38 +189,16 @@ export const TEST_DATA = (cypress) => {
       : playwrightFile;
 
   const testDataPath = path.resolve(projectRootPath, testData);
-
-  const cypressExists = fs.existsSync(path.resolve(__dirname, cypressFile));
-  const playwrightExists = fs.existsSync(
-    path.resolve(__dirname, playwrightFile)
-  );
-
   if (!fs.existsSync(configPath)) {
-    console.error(
-      chalk.yellow(
-        'Configuration file not found. ' + `run ${chalk.green('qasr-setup')}.`
-      )
-    );
-    process.exit(1);
+    throw testResultsError('Configuration file not found. Run qasr-setup.');
   }
 
-  if (!cypressExists && !playwrightExists && !shadowConfigFile) {
-    console.log(
-      chalk.yellow(
-        `It looks like you have added a config file ${chalk.green(configPath)} but haven't added a filepath to your results, please add a path to your JSON test results (usually compiled from mochawesome).`
-      )
-    );
-    process.exit(1);
+  if (!shadowConfigFile && !fs.existsSync(testDataPath)) {
+    throw testResultsError(`Set testData in ${configPath} to the path of your JSON test results.`);
   }
 
   if (!fs.existsSync(testDataPath)) {
-    console.error(
-      chalk.yellow(
-        `Test results file ${chalk.green(`testData:"${testData}`)}" not found at path: ${chalk.green(testDataPath)}. ` +
-          'Please ensure the file is present.'
-      )
-    );
-    process.exit(1);
+    throw testResultsError(`Test results file not found at ${testDataPath}. Check the testData setting and generate the results file.`);
   }
 
   return testData;

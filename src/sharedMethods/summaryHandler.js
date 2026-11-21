@@ -4,7 +4,7 @@ import {
   getTabIdFromTitle,
   getTabIdFromWeeklyTitle,
 } from '../google/sheetDataMethods/getSheetInfo.js';
-import { auth, sheets, spreadsheetId } from '../google/auth.js';
+import { auth, sheets, spreadsheetId, initializationError } from '../google/auth.js';
 import { addColumnsAndRowsToTabId } from '../google/sheetDataMethods/processSheetData.js';
 import { createSummaryTitle } from '../google/sheetDataMethods/createTabNames.js';
 import { constructPayloadForCopyPaste } from '../monthlySummaryMethods/buildSummary.js';
@@ -27,7 +27,7 @@ import {
 } from './summaryRequired.js';
 import chalk from 'chalk';
 import { WEEK_START, DAYS, SHORT_DAYS, MONTHS } from '../../constants.js';
-import { withErrorContext } from '../utils/errors.js';
+import { requireSheetsClient, withErrorContext } from '../utils/errors.js';
 
 export const getHeaderIndicatorsLength = () => {
   return HEADER_INDICATORS.length;
@@ -57,7 +57,7 @@ export const initializeReportColumnMetrics = (headerIndicatorsLength) => {
  */
 const sendSummaryBody = async (payload) => {
   try {
-    await sheets.spreadsheets.batchUpdate({
+    await requireSheetsClient(sheets, initializationError).spreadsheets.batchUpdate({
       auth,
       spreadsheetId,
       resource: {
@@ -122,7 +122,7 @@ const addColumnsAndRows = async (
  */
 const sendSummaryHeaders = async (payload) => {
   try {
-    await sheets.spreadsheets.values.batchUpdate({
+    await requireSheetsClient(sheets, initializationError).spreadsheets.values.batchUpdate({
       auth,
       spreadsheetId,
       requestBody: {
@@ -143,7 +143,7 @@ const sendSummaryHeaders = async (payload) => {
  */
 const summaryHeaderStyling = async (payload) => {
   try {
-    await sheets.spreadsheets.batchUpdate({
+    await requireSheetsClient(sheets, initializationError).spreadsheets.batchUpdate({
       auth,
       spreadsheetId,
       requestBody: {

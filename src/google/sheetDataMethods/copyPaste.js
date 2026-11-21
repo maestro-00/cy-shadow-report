@@ -51,7 +51,7 @@ export const copyPasteNormal = (
     typeof srcStartCol !== 'number' ||
     typeof srcEndCol !== 'number'
   ) {
-    throw new Error(
+    throw new TypeError(
       'Invalid source parameters: sourcePageId, startRow, endRow, startCol, and endCol must all be numbers.'
     );
   }
@@ -63,7 +63,7 @@ export const copyPasteNormal = (
     typeof destStartCol !== 'number' ||
     typeof destEndCol !== 'number'
   ) {
-    throw new Error(
+    throw new TypeError(
       'Invalid destination parameters: destinationTabId, startRow, endRow, startCol, and endCol must all be numbers.'
     );
   }

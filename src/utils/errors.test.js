@@ -27,4 +27,9 @@ describe('withErrorContext', () => {
       expect.objectContaining({ cause })
     );
   });
+
+  it('uses an injected Sheets client even when default authentication failed', () => {
+    const client = { spreadsheets: {} };
+    expect(requireSheetsClient(client, new Error('invalid credentials'))).toBe(client);
+  });
 });

@@ -22,6 +22,10 @@ import {
 import { jest } from '@jest/globals';
 
 describe('report generation helpers', () => {
+  it.each([[null], [[1]]])('rejects invalid formula key input %j with TypeError', (keys) => {
+    expect(() => getKeysPattern({ FORMULA_KEYS: keys })).toThrow(TypeError);
+  });
+
   // Test Data Setup
   const createTestParams = (params) => ({
     ...params,

@@ -14,15 +14,15 @@ export const appendStateReportsToHeader = (
   playwright
 ) => {
   if (!Array.isArray(headerPayload)) {
-    throw new Error('Invalid headerPayload: Expected an array.');
+    throw new TypeError('Invalid headerPayload: Expected an array.');
   }
 
   if (!Array.isArray(defaultHeaderMetrics)) {
-    throw new Error('Invalid defaultHeaderMetrics: Expected an array.');
+    throw new TypeError('Invalid defaultHeaderMetrics: Expected an array.');
   }
 
   if (typeof playwright !== 'boolean') {
-    throw new Error('Invalid playwright value: Expected a boolean.');
+    throw new TypeError('Invalid playwright value: Expected a boolean.');
   }
 
   const columnsAvailable = COLUMNS_AVAILABLE(playwright);

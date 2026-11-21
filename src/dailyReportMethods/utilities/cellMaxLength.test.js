@@ -1,6 +1,10 @@
 import { enforceMaxLength } from './cellMaxLength';
 
 describe('enforceMaxLength', () => {
+  it('uses RangeError for a negative maximum length', () => {
+    expect(() => enforceMaxLength('hello', -1)).toThrow(RangeError);
+  });
+
   // Test Data Setup
   const createTestParams = (str, maxLength) => ({
     str,
@@ -70,13 +74,13 @@ describe('enforceMaxLength', () => {
   describe('Input Validation', () => {
     it('should throw an error if maxLength is negative', () => {
       expect(() => enforceMaxLength('test', -1)).toThrow(
-        'maxLength must be a positive integer'
+        'maxLength must be a non-negative integer'
       );
     });
 
     it('should throw an error if maxLength is not an integer', () => {
       expect(() => enforceMaxLength('test', 1.5)).toThrow(
-        'maxLength must be a positive integer'
+        'maxLength must be a non-negative integer'
       );
     });
 

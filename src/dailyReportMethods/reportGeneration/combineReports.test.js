@@ -237,9 +237,7 @@ describe('combineReports', () => {
       expect(() => combineReports(invalidReportEntries, placeholders)).toThrow(
         'Invalid report entry: Expected an array.'
       );
-      expect(console.error).toHaveBeenCalledWith(
-        'Invalid report entry: Expected an array.'
-      );
+      expect(console.error).not.toHaveBeenCalled();
     });
 
     it('should throw an error if any placeholder entry is not an array', () => {
@@ -251,9 +249,7 @@ describe('combineReports', () => {
       expect(() =>
         combineReports(allReportEntries, invalidPlaceholders)
       ).toThrow('Invalid placeholder entry: Expected an array.');
-      expect(console.error).toHaveBeenCalledWith(
-        'Invalid placeholder entry: Expected an array.'
-      );
+      expect(console.error).not.toHaveBeenCalled();
     });
   });
 
@@ -269,9 +265,7 @@ describe('combineReports', () => {
       expect(() => combineReports(allReportEntries, placeholders)).toThrow(
         'Invalid report entry: Expected an array.'
       );
-      expect(console.error).toHaveBeenCalledWith(
-        'Invalid report entry: Expected an array.'
-      );
+      expect(console.error).not.toHaveBeenCalled();
     });
 
     it.skip('should handle errors during report combination', () => {

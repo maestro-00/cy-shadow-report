@@ -17,13 +17,14 @@ import { sortPayload } from '../processing/sortDailyReportRows.js';
  * @returns {Promise<Object>} A promise resolving with structured data object.
  */
 export const buildDailyPayload = async (dataSet, playwright) => {
+  if (typeof dataSet !== 'object' || dataSet === null) {
+    throw new TypeError('Invalid dataSet: Expected an object.');
+  }
+  if (typeof playwright !== 'boolean') {
+    throw new TypeError('Invalid playwright flag: Expected a boolean.');
+  }
+
   try {
-    if (typeof dataSet !== 'object' || dataSet === null) {
-      throw new TypeError('Invalid dataSet: Expected an object.');
-    }
-    if (typeof playwright !== 'boolean') {
-      throw new TypeError('Invalid playwright flag: Expected a boolean.');
-    }
 
     const columnsAvailable = COLUMNS_AVAILABLE(playwright);
     if (!Array.isArray(columnsAvailable)) {

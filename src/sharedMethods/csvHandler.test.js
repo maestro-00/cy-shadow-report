@@ -1,49 +1,26 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
-
-// Mock Setup
-jest.mock('fs');
-jest.mock('path');
-jest.mock('./dateFormatting.js', () => ({
-  getCurrentTime: jest.fn().mockReturnValue('10:00:00'),
-  getTodaysFormattedDate: jest.fn().mockReturnValue('2024-03-20'),
+const fs = {
+  existsSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+};
+jest.unstable_mockModule('fs', () => ({ default: fs }));
+jest.unstable_mockModule('./dateFormatting.js', () => ({
+  getCurrentTime: () => '10:00:00',
+  getTodaysFormattedDate: () => '2024-03-20',
 }));
 
-// Mock CSV_DOWNLOADS_PATH to return a consistent path
 const MOCK_DOWNLOADS_PATH = '/mock/downloads';
-jest.mock('../../constants.js', () => ({
-  CSV_DOWNLOADS_PATH: jest.fn(() => MOCK_DOWNLOADS_PATH),
+jest.unstable_mockModule('../../constants.js', () => ({
+  CSV_DOWNLOADS_PATH: () => MOCK_DOWNLOADS_PATH,
 }));
 
-// Mock chalk to prevent console output during tests
-jest.mock('chalk', () => ({
-  yellow: (text) => text,
-  green: (text) => text,
-}));
-
-// Import after mocks are set up
-import { saveCSV, calculateDailySummaryMetrics } from './csvHandler.js';
-import { getCurrentTime, getTodaysFormattedDate } from './dateFormatting.js';
-import { CSV_DOWNLOADS_PATH } from '../../constants.js';
-
-afterAll(() => {
-  jest.unmock('fs');
-  jest.unmock('path');
-  jest.resetModules();
-});
+const { saveCSV, calculateDailySummaryMetrics } = await import('./csvHandler.js');
 
 describe('CSV Handler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Setup mock implementations
-    path.join = jest.fn().mockImplementation((...args) => {
-      // Join paths with forward slashes and ensure the mock path is used
-      return args.filter(Boolean).join('/').replace(/\/+/g, '/');
-    });
-    fs.existsSync = jest.fn().mockReturnValue(false);
-    fs.mkdirSync = jest.fn().mockImplementation(() => {});
-    fs.writeFileSync = jest.fn().mockImplementation(() => {});
+    fs.existsSync.mockReturnValue(false);
     // Mock console.info to prevent output during tests
     jest.spyOn(console, 'info').mockImplementation(() => {});
   });
